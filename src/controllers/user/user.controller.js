@@ -68,7 +68,7 @@ export async function create(req, res) {
         if (existedUser.length === 0) {
             const user = await User.create({
                 username: req.body.username || '',
-                password: req.password.password || '',
+                password: req.body.password || '',
                 role: Number(req.body.role) || CONSTS.USER_ROLES.NORMAL
             });
 
@@ -88,10 +88,10 @@ export async function list(req, res) {
 
     try {
         const users = await User.find({ })
-            .sort({ ts: -1 })
+            .sort({ updatedAt: -1 })
             .limit(pageSize)
             .skip(page * pageSize);
-            
+
         const count = await User.count({ });
 
         return res.status(200).json({

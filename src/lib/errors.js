@@ -20,6 +20,12 @@ const errors = {
 
     USER_NOT_FOUND: { code: 30100, message: '找不到用户' },
     USERNAME_EXISTED: { code: 30200, message: '用户名重复' },
+
+    PROJECT_NOT_FOUND: { code: 40100, message: '找不到项目' },
+    PROJECT_NAME_EXISTED: { code: 40200, message: '项目名重复' },
+
+    ENTITY_NOT_FOUND: { code: 50100, message: '找不到实体' },
+    ENTITY_NAME_EXISTED: { code: 50200, message: '实体名重复' },
 };
 
 export default errors;
