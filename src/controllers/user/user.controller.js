@@ -8,6 +8,26 @@ import errors from '../../lib/errors';
 import { logger } from '../../lib/logger';
 import { getPageOption, getPageMetadata } from '../../lib/utils';
 
+export async function requireLogin(req, res, next) {
+    if (req.session.user === undefined || req.session.user == null) {
+        return res.status(400).send(JSON.stringify(errors.UNAUTHORIZED));
+    }
+
+    return next();
+}
+
+export async function requireAuthorization(req, res, next) {
+    if (
+        req.session.user === undefined ||
+        req.session.user == null ||
+        req.session.user.role !== CONSTS.USER_ROLES.ADMIN
+    ) {
+        return res.status(400).send(JSON.stringify(errors.UNAUTHORIZED));
+    }
+
+    return next();
+}
+
 export async function userById(req, res, next, id) {
     try {
         const user = await User.findById(id);
@@ -106,3 +126,41 @@ export async function list(req, res) {
     }
 }
 
+export async function login(req, res) {
+    const { body } = req;
+
+    if (body.username === undefined || body.username == null) {
+        return res.status(400).send(JSON.stringify(errors.LOGIN_FAILED));
+    }
+
+    try {
+        const user = await User.findOne(body);
+
+        if (user === undefined || user == null) {
+            return res.status(400).send(JSON.stringify(errors.LOGIN_FAILED));
+        }
+
+        // remove password from user
+        const userJson = user.toJSON();
+        _.unset(userJson, 'password');
+
+        // save user to session
+        req.session.user = userJson;
+
+        return res.status(200).json(userJson);
+    } catch (err) {
+        logger.error(`UserCtrl::login() error`, err);
+        return res.status(500).send(err.toString());
+    }
+}
+
+export function logout(req, res) {
+    req.session.destroy((err) => {
+        if (err) {
+            logger.error(`UserCtrl::logout() error`, err);
+            return res.status(500).send(err.toString());
+        }
+
+        return res.status(200).end();
+    });
+}

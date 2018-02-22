@@ -9,9 +9,10 @@ import { httpLogger } from './lib/logger';
 // import ssr from './lib/ssr';
 import routers from './routers';
 import config from './config';
+import { init } from './services/init.service';
 
 const app = express();
-const RedisStore = require('connect-redis')(session);
+const MongoStore = require('connect-mongo')(session);
 
 // MongoDB Connection
 mongoose.connect();
@@ -19,19 +20,20 @@ mongoose.connect();
 // Redis Connection
 // redis.connect();
 
+// system init
+init();
+
 // Express MongoDB session storage
-/*
 app.use(session({
     saveUninitialized: true,
     resave: true,
     secret: config.sessionSecret,
-    store: new RedisStore({
-        client: redis.connection,
+    store: new MongoStore({
+        url: config.mongoURL
     }),
     cookie: config.sessionCookie,
     name: config.sessionName,
 }));
-*/
 
 // mount passport middleware
 // passportRegister(app);

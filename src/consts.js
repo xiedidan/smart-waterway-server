@@ -3,6 +3,12 @@ export const USER_ROLES = {
     ADMIN: 1
 }
 
+export const DEFAULT_USER = {
+    username: 'admin',
+    password: 'swAdmin12',
+    role: USER_ROLES.ADMIN
+}
+
 export const DOCUMENT_ACCESS = {
     PUBLIC: 0,
     PRIVATE: 1

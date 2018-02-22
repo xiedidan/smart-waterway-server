@@ -4,6 +4,11 @@ import UserCtrl from '../controllers/user';
 const router = express.Router();
 
 // user
+router.route('/login')
+    .post(UserCtrl.login);
+router.route('/logout')
+    .get(UserCtrl.logout);
+
 router.route('/users')
     .get(UserCtrl.list)
     .post(UserCtrl.create);
