@@ -87,18 +87,19 @@ export async function create(req, res) {
 }
 
 export async function list(req, res) {
-    const { page, pageSize } = getPageOption(req);
+    const pageOption = getPageOption(req);
+    const { limit, offset } = pageOption;
 
     try {
         const projects = await Project.find({ })
             .sort({ updatedAt: -1 })
-            .limit(pageSize)
-            .skip(page * pageSize);
+            .limit(limit)
+            .skip(offset);
 
         const count = await Project.count({ });
 
         return res.status(200).json({
-          _meta: {...getPageMetadata(getPageOption(req), count)},
+          _metadata: {...getPageMetadata(pageOption, count)},
           projects
         });
     }

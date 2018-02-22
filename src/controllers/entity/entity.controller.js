@@ -105,26 +105,21 @@ export async function load(req, res) {
 }
 
 export async function list(req, res) {
-    const { page, pageSize } = getPageOption(req);
+    const pageOption = getPageOption(req);
+    const { limit, offset } = pageOption;
 
-    const query = {
-        name: req.query.name,
-        project: req.query.project,
-        user: req.query.user,
-        access: req.query.access,
-        type: req.query.type
-    }
+    const { query } = req;
 
     try {
         const entities = await Entity.find(query)
             .sort({ updatedAt: -1 })
-            .limit(pageSize)
-            .skip(page * pageSize);
+            .limit(limit)
+            .skip(offset);
 
         const count = await Entity.count(query);
 
         return res.status(200).json({
-            _meta: {...getPageMetadata(getPageOption(req), count)},
+            _metadata: {...getPageMetadata(pageOption, count)},
             entities
         });
     }

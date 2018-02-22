@@ -3,7 +3,7 @@ import EntityCtrl from '../controllers/entity';
 
 const router = express.Router();
 
-// project
+// entity
 router.route('/entities')
     .get(EntityCtrl.list)
     .post(EntityCtrl.create);

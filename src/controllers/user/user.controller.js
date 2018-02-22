@@ -84,7 +84,8 @@ export async function create(req, res) {
 }
 
 export async function list(req, res) {
-    const { page, pageSize } = getPageOption(req);
+    const pageOption = getPageOption(req);
+    const { limit, offset } = pageOption;
 
     try {
         const users = await User.find({ })
@@ -95,7 +96,7 @@ export async function list(req, res) {
         const count = await User.count({ });
 
         return res.status(200).json({
-          _meta: {...getPageMetadata(getPageOption(req), count)},
+          _meta: {...getPageMetadata(pageOption, count)},
           users
         });
     }
