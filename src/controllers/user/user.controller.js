@@ -110,8 +110,8 @@ export async function list(req, res) {
     try {
         const users = await User.find({ })
             .sort({ updatedAt: -1 })
-            .limit(pageSize)
-            .skip(page * pageSize);
+            .limit(limit)
+            .skip(offset);
 
         const count = await User.count({ });
 
