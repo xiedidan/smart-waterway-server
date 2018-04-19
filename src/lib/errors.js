@@ -26,6 +26,8 @@ const errors = {
 
     ENTITY_NOT_FOUND: { code: 50100, message: '找不到实体' },
     ENTITY_NAME_EXISTED: { code: 50200, message: '实体名重复' },
+
+    RECORD_NOT_FOUND: { codd: 60100, message: '找不到记录' },
 };
 
 export default errors;

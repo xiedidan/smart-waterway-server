@@ -13,6 +13,9 @@ router.route('/users')
     .get(UserCtrl.list)
     .post(UserCtrl.create);
 
+router.route('/users/me')
+    .get(UserCtrl.getSessionUser);
+
 router.route('/users/:userId')
     .get(UserCtrl.read)
     .put(UserCtrl.update)

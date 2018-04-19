@@ -37,8 +37,7 @@ export async function userById(req, res, next, id) {
         }
 
         return res.status(400).send(JSON.stringify(errors.USER_NOT_FOUND));
-    }
-    catch(err) {
+    } catch(err) {
         logger.error(`UserCtrl::userById() error`, err);
         res.status(500).send(err.toString());
     }
@@ -52,7 +51,7 @@ export async function update(req, res) {
     const { user, body } = req;
     const { username, password, role } = body;
     const query = _.pickBy({ username, password, role }, _.identity);
-
+console.log(body)
     try {
         if (username !== user.username) {
             const existedUser = await User.find({ username });
@@ -64,8 +63,7 @@ export async function update(req, res) {
         user.set(query);
         const updatedUser = await user.save();
         return res.status(200).json(updatedUser.toJSON());
-    }
-    catch(err) {
+    } catch(err) {
         logger.error(`UserCtrl::update() error`, err);
         return res.status(500).send(err.toString());
     }
@@ -75,8 +73,7 @@ export async function remove(req, res) {
     try {
         await req.user.remove();
         return res.status(200).end();
-    }
-    catch(err) {
+    } catch(err) {
         logger.error(`UserCtrl::remove() error`, err);
         return res.status(500).send(err.toString());
     }
@@ -96,8 +93,7 @@ export async function create(req, res) {
         }
 
         return res.status(400).send(JSON.stringify(errors.USERNAME_EXISTED));
-    }
-    catch(err) {
+    } catch(err) {
         logger.error(`UserCtrl::create() error`, err);
         return res.status(500).send(err.toString());
     }
@@ -113,14 +109,22 @@ export async function list(req, res) {
             .limit(limit)
             .skip(offset);
 
+        const usersWithoutPassword = users.map((user) => {
+            const userWithoutPassword = user.toJSON();
+            _.unset(userWithoutPassword, 'password');
+            
+            return userWithoutPassword;
+        });
+
         const count = await User.count({ });
 
         return res.status(200).json({
-          _meta: {...getPageMetadata(pageOption, count)},
-          users
+            _meta: {
+                ...getPageMetadata(pageOption, count)
+            },
+            users: usersWithoutPassword
         });
-    }
-    catch(err) {
+    } catch (err) {
         logger.error(`UserCtrl::list() error`, err);
         return res.status(500).send(err.toString());
     }
@@ -149,7 +153,7 @@ export async function login(req, res) {
 
         return res.status(200).json(userJson);
     } catch (err) {
-        logger.error(`UserCtrl::login() error`, err);
+        logger.error(`UserCtrl::login() error`, err.stack);
         return res.status(500).send(err.toString());
     }
 }
@@ -163,4 +167,15 @@ export function logout(req, res) {
 
         return res.status(200).end();
     });
+}
+
+export async function getSessionUser(req, res) {
+    if (
+        req.session !== undefined &&
+        req.session != null
+    ) {
+        return res.status(200).json(req.session.user);
+    }
+    
+    return res.status(400).send(JSON.stringify(errors.UNAUTHORIZED));
 }

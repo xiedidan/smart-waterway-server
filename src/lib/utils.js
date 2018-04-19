@@ -45,7 +45,7 @@ function extractErrorInfo(err, model) {
 }
 
 export function getPageOption(req) {
-    const page = Number(req.query.page) || 0;
+    const page = Number(req.query.page - 1) || 0;
     const skip = Number(req.query.skip) || 0;
     const pageSize = Math.max(CONSTS.MIN_PAGE_SIZE,
         Math.min(CONSTS.MAX_PAGE_SIZE,
@@ -66,6 +66,6 @@ export function getPageMetadata(pageOption, count) {
     const remainingCount = count - skip;
     const pageCount = Math.ceil(remainingCount / pageSize);
     return {
-        page, pageSize, pageCount, totalCount: remainingCount
+        page: page + 1, pageSize, pageCount, totalCount: remainingCount
     };
 }

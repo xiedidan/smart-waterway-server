@@ -19,8 +19,7 @@ export async function entityById(req, res, next, id) {
         }
 
         return res.status(400).send(JSON.stringify(errors.ENTITY_NOT_FOUND));
-    }
-    catch(err) {
+    } catch (err) {
         logger.error(`EntityCtrl::entityById() error`, err);
         res.status(500).send(err.toString());
     }
@@ -39,8 +38,7 @@ export async function update(req, res) {
         entity.set(query);
         const updatedEntity = await entity.save();
         return res.status(200).json(updatedEntity.toJSON());
-    }
-    catch(err) {
+    } catch (err) {
         logger.error(`EntityCtrl::update() error`, err);
         return res.status(500).send(err.toString());
     }
@@ -50,8 +48,7 @@ export async function remove(req, res) {
     try {
         await req.entity.remove();
         return res.status(200).end();
-    }
-    catch(err) {
+    } catch (err) {
         logger.error(`EntityCtrl::remove() error`, err);
         return res.status(500).send(err.toString());
     }
@@ -66,19 +63,64 @@ export async function create(req, res) {
             access: req.body.access || CONSTS.DOCUMENT_ACCESS.PUBLIC,
             desc: req.body.desc || '',
             location: req.body.location || { type: 'Point', coordinates: [0, 0] },
-            type: CONSTS.ENTITY_TYPES.UNKNOWN,
+            type: req.body.type || CONSTS.ENTITY_TYPES.UNKNOWN,
             info: req.body.info || {}
         });
+        entity.markModified('info');
+        await entity.save();
 
-        return res.status(200).json(entity);
-    }
-    catch(err) {
+        return res.status(200).json(entity.toJSON());
+    } catch (err) {
         logger.error(`EntityCtrl::create() error`, err);
         return res.status(500).send(err.toString());
     }
 }
 
+// load*() does NOT support paging, while list() does
+
 export async function load(req, res) {
+    const { project, type } = req.query;
+    // const params = _.pickBy({ project, type }, _.identity);
+
+    try {
+        const params = {
+            project
+        };
+        if (
+            type !== undefined &&
+            type != null
+        ) {
+            params.type = { $in: params.type };
+        }
+
+        const query = _.pickBy(params, _.identity);
+
+        const entities = await Entity.find(query);
+
+        if (
+            entities !== undefined &&
+            entities != null
+        ) {
+            // load last record
+            const status = await Promise.map(entities, (entity) => {
+                return Record.findOne({
+                    entity: entity._id
+                })
+                    .populate('entity')
+                    .sort({ createdAt: -1 });
+            });
+
+            return res.status(200).json(status);
+        }
+
+        return res.status(404).end();
+    } catch (err) {
+        logger.error('EntityCtrl::load() error', err);
+        return res.status(500).send(err.toString());
+    }
+}
+
+export async function loadWithin(req, res) {
     if (req.body.coordinates === undefined || req.body.coordinates == null) {
         const err = errors.MISSING_REQUEST_FIELDS;
         err.fields.push('coordinates');
@@ -86,20 +128,24 @@ export async function load(req, res) {
         return res.status(400).send(JSON.stringify(err));
     }
 
+    const { project, type } = req.query;
+    const params = _.pickBy({ project, type }, _.identity);
+
     const query = {
-        project: req.body.projects ? { $in: req.body.projects } : undefined,
-        access: req.body.access,
-        location: { $within: { $geometry: JSON.parse(req.body.coordinates) } },
-        type: req.body.types ? { $in: req.body.types } : undefined
-    }
+        ...params,
+        location: {
+            $geoWithin: {
+                $geometry: req.body.coordinates
+            }
+        },
+    };
 
     try {
         const entities = await Entity.find(query);
 
         return res.status(200).json(entities);
-    }
-    catch(err) {
-        logger.error(`EntityCtrl::load() error`, err);
+    } catch (err) {
+        logger.error('EntityCtrl::loadWithin() error', err);
         return res.status(500).send(err.toString());
     }
 }
@@ -108,10 +154,13 @@ export async function list(req, res) {
     const pageOption = getPageOption(req);
     const { limit, offset } = pageOption;
 
-    const { query } = req;
+    const { project, type } = req.query;
+    const query = _.pickBy({project, type}, _.identity);
 
     try {
         const entities = await Entity.find(query)
+            .populate('project')
+            .populate('user')
             .sort({ updatedAt: -1 })
             .limit(limit)
             .skip(offset);
@@ -119,11 +168,12 @@ export async function list(req, res) {
         const count = await Entity.count(query);
 
         return res.status(200).json({
-            _metadata: {...getPageMetadata(pageOption, count)},
+            _meta: {
+                ...getPageMetadata(pageOption, count)
+            },
             entities
         });
-    }
-    catch(err) {
+    } catch (err) {
         logger.error(`EntityCtrl::list() error`, err);
         return res.status(500).send(err.toString());
     }

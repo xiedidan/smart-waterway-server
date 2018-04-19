@@ -1,11 +1,10 @@
 {
-    "presets": [
-      ["env", {
-        "targets": {
-          "node": "current"
-        }
-      }],
-      "stage-1"
-    ]
-  }
-  
+  "presets": [
+    ["env", {
+      "targets": {
+        "node": "current"
+      }
+    }],
+    "stage-1"
+  ]
+}

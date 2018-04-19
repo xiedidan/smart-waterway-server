@@ -19,8 +19,7 @@ export async function projectById(req, res, next, id) {
         }
 
         return res.status(400).send(JSON.stringify(errors.PROJECT_NOT_FOUND));
-    }
-    catch(err) {
+    } catch (err) {
         logger.error(`ProjectCtrl::projectById() error`, err);
         res.status(500).send(err.toString());
     }
@@ -33,7 +32,12 @@ export function read(req, res) {
 export async function update(req, res) {
     const { project, body } = req;
     const { name, user, desc, geo } = body;
-    const query = _.pickBy({ name, user, desc, geo }, _.identity);
+    const query = _.pickBy({
+        name,
+        user,
+        desc,
+        geo
+    }, _.identity);
 
     try {
         if (name !== project.name) {
@@ -46,8 +50,7 @@ export async function update(req, res) {
         project.set(query);
         const updatedProject = await project.save();
         return res.status(200).json(updatedProject.toJSON());
-    }
-    catch(err) {
+    } catch (err) {
         logger.error(`ProjectCtrl::update() error`, err);
         return res.status(500).send(err.toString());
     }
@@ -57,8 +60,7 @@ export async function remove(req, res) {
     try {
         await req.project.remove();
         return res.status(200).end();
-    }
-    catch(err) {
+    } catch (err) {
         logger.error(`ProjectCtrl::remove() error`, err);
         return res.status(500).send(err.toString());
     }
@@ -72,15 +74,14 @@ export async function create(req, res) {
                 name: req.body.name || '',
                 user: req.body.user || '',
                 desc: req.body.desc || '',
-                geo: req.body.geo || { type: 'Polygon', coordinates: [[ [0, 0], [0, 1], [1, 1] ]] }
+                geo: req.body.geo || { type: 'Polygon', coordinates: [[[0, 0], [0, 1], [1, 1]]] }
             });
 
             return res.status(200).json(project);
         }
 
         return res.status(400).send(JSON.stringify(errors.PROJECT_NAME_EXISTED));
-    }
-    catch(err) {
+    } catch (err) {
         logger.error(`ProjectCtrl::create() error`, err);
         return res.status(500).send(err.toString());
     }
@@ -92,6 +93,7 @@ export async function list(req, res) {
 
     try {
         const projects = await Project.find({ })
+            .populate('user')
             .sort({ updatedAt: -1 })
             .limit(limit)
             .skip(offset);
@@ -99,11 +101,12 @@ export async function list(req, res) {
         const count = await Project.count({ });
 
         return res.status(200).json({
-          _metadata: {...getPageMetadata(pageOption, count)},
-          projects
+            _meta: {
+                ...getPageMetadata(pageOption, count)
+            },
+            projects
         });
-    }
-    catch(err) {
+    } catch (err) {
         logger.error(`ProjectCtrl::list() error`, err);
         return res.status(500).send(err.toString());
     }
