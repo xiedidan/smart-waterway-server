@@ -39,4 +39,4 @@ export const WEATHER = {
     SNOW: 8,
     SLEET: 9,
     HAIL: 10,
-}
+};
