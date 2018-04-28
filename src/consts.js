@@ -26,3 +26,17 @@ export const ENTITY_TYPES = {
 export const DEFAULT_PAGE_SIZE = 20;
 export const MIN_PAGE_SIZE = 20;
 export const MAX_PAGE_SIZE = 100;
+
+export const WEATHER = {
+    SUNNY: 0,
+    CLOUDY: 1,
+    OVERCAST: 2,
+    MIST: 3,
+    FOG: 4,
+    RAIN: 5,
+    SHOWER: 6,
+    STORM: 7,
+    SNOW: 8,
+    SLEET: 9,
+    HAIL: 10,
+}

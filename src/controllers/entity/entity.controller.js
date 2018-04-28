@@ -2,7 +2,7 @@ import _ from 'lodash';
 import Promise from 'bluebird';
 import { ObjectID } from 'mongodb';
 
-import { Entity } from '../../models';
+import { Entity, Record } from '../../models';
 
 import config from '../../config';
 import * as CONSTS from '../../consts';
@@ -90,7 +90,7 @@ export async function load(req, res) {
             type !== undefined &&
             type != null
         ) {
-            params.type = { $in: params.type };
+            params.type = { $in: type };
         }
 
         const query = _.pickBy(params, _.identity);
@@ -110,7 +110,15 @@ export async function load(req, res) {
                     .sort({ createdAt: -1 });
             });
 
-            return res.status(200).json(status);
+            const results = status.filter((value) => {
+                if (value == null) {
+                    return false;
+                }
+                
+                return true;
+            });
+
+            return res.status(200).json(results);
         }
 
         return res.status(404).end();
