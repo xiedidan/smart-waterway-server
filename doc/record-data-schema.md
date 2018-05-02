@@ -1,6 +1,24 @@
-# Record Data Schema  
+# Record Data Schema
 
-## Weather  
+## Marker
+
+``` javascript
+{
+    error: Boolean,
+    shift: Boolean,
+}
+```
+
+## Hydrology
+
+``` javascript
+{
+    level: Number,
+    rate: Number,
+}
+```
+
+## Weather
 
 ``` javascript
 {
@@ -8,5 +26,13 @@
     level: Number, // may be 1 - 5
     temperature: Number,
     humidity: Number,
+}
+```
+
+## Ship
+
+``` javascript
+{
+    speed: Number,
 }
 ```
