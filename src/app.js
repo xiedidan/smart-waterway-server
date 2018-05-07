@@ -11,6 +11,7 @@ import { httpLogger } from './lib/logger';
 import routers from './routers';
 import config from './config';
 import { init } from './services/init.service';
+import { startDriver } from './services/driver.service';
 
 const app = express();
 const MongoStore = require('connect-mongo')(session);
@@ -23,6 +24,11 @@ mongoose.connect();
 
 // system init
 init();
+
+// start driver
+if (config.drive) {
+    startDriver();
+}
 
 // Express MongoDB session storage
 app.use(session({

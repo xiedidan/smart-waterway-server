@@ -10,4 +10,5 @@ module.exports = {
     sessionCollection: process.env.SW_SESSION_COL,
     // The session cookie name
     sessionName: process.env.SW_SESSION_NAME,
+    drive: process.env.SW_DRIVE === 'true',
 };
