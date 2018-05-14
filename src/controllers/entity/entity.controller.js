@@ -69,6 +69,14 @@ export async function create(req, res) {
         entity.markModified('info');
         await entity.save();
 
+        if (req.body.type === CONSTS.ENTITY_TYPES.INFO) {
+            // insert a dummy record
+            await Record.create({
+                entity: entity._id,
+                data: 0
+            });
+        }
+
         return res.status(200).json(entity.toJSON());
     } catch (err) {
         logger.error(`EntityCtrl::create() error`, err);
