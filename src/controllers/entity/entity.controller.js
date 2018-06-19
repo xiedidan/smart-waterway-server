@@ -94,11 +94,14 @@ export async function load(req, res) {
         const params = {
             project
         };
+
         if (
             type !== undefined &&
             type != null
         ) {
             params.type = { $in: type };
+        } else {
+            return res.status(200).json([]);
         }
 
         const query = _.pickBy(params, _.identity);
