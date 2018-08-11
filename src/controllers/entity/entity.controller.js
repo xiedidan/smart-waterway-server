@@ -1,6 +1,8 @@
 import _ from 'lodash';
 import Promise from 'bluebird';
 import { ObjectID } from 'mongodb';
+import fs from 'fs';
+import path from 'path';
 
 import { Entity, Record } from '../../models';
 
@@ -69,7 +71,10 @@ export async function create(req, res) {
         entity.markModified('info');
         await entity.save();
 
-        if (req.body.type === CONSTS.ENTITY_TYPES.INFO) {
+        if (
+            req.body.type === CONSTS.ENTITY_TYPES.INFO ||
+            req.body.type === CONSTS.ENTITY_TYPES.DOCUMENT
+        ) {
             // insert a dummy record
             await Record.create({
                 entity: entity._id,
@@ -121,12 +126,62 @@ export async function load(req, res) {
                     .sort({ createdAt: -1 });
             });
 
-            const results = status.filter((value) => {
+            let results = status.filter((value) => {
                 if (value == null) {
                     return false;
                 }
                 
                 return true;
+            });
+
+            // rewrite record data of document entity with file names
+            results = results.map((result) => {
+                if (result.entity.type === CONSTS.ENTITY_TYPES.DOCUMENT) {
+                    let keywords = result.entity.info;
+
+                    const designs = fs.readdirSync(path.join(
+                        CONSTS.DOCUMENT_PATH,
+                        'design/'
+                    ));
+
+                    const snapshots = fs.readdirSync(path.join(
+                        CONSTS.DOCUMENT_PATH,
+                        'snapshot/'
+                    ));
+
+                    keywords = keywords.map((keyword) => {
+                        const myDesigns = _.uniq(designs.filter((design) => {
+                            if (design.indexOf(`附图${keyword}`) !== -1) {
+                                return true;
+                            }
+
+                            return false;
+                        }));
+
+                        const mySnapshots = _.uniq(snapshots.filter((snapshot) => {
+                            if (
+                                snapshot.startsWith(keyword) &&
+                                isNaN(parseInt(snapshot.charAt(keyword.length), 10))
+                            ) {
+                                return true;
+                            }
+
+                            return false;
+                        }));
+
+                        return {
+                            designs: myDesigns,
+                            snapshots: mySnapshots
+                        };
+                    });
+
+                    const record = result.toJSON();
+                    record.data = keywords;
+
+                    return record;
+                }
+
+                return result.toJSON();
             });
 
             return res.status(200).json(results);

@@ -37,7 +37,7 @@ export async function userById(req, res, next, id) {
         }
 
         return res.status(400).send(JSON.stringify(errors.USER_NOT_FOUND));
-    } catch(err) {
+    } catch (err) {
         logger.error(`UserCtrl::userById() error`, err);
         res.status(500).send(err.toString());
     }
@@ -51,7 +51,7 @@ export async function update(req, res) {
     const { user, body } = req;
     const { username, password, role } = body;
     const query = _.pickBy({ username, password, role }, _.identity);
-console.log(body)
+
     try {
         if (username !== user.username) {
             const existedUser = await User.find({ username });
@@ -63,7 +63,7 @@ console.log(body)
         user.set(query);
         const updatedUser = await user.save();
         return res.status(200).json(updatedUser.toJSON());
-    } catch(err) {
+    } catch (err) {
         logger.error(`UserCtrl::update() error`, err);
         return res.status(500).send(err.toString());
     }
@@ -73,7 +73,7 @@ export async function remove(req, res) {
     try {
         await req.user.remove();
         return res.status(200).end();
-    } catch(err) {
+    } catch (err) {
         logger.error(`UserCtrl::remove() error`, err);
         return res.status(500).send(err.toString());
     }
@@ -93,7 +93,7 @@ export async function create(req, res) {
         }
 
         return res.status(400).send(JSON.stringify(errors.USERNAME_EXISTED));
-    } catch(err) {
+    } catch (err) {
         logger.error(`UserCtrl::create() error`, err);
         return res.status(500).send(err.toString());
     }

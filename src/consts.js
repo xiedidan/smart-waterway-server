@@ -42,6 +42,9 @@ export const WEATHER = {
     HAIL: 10,
 };
 
+export const DOCUMENT_PATH = '/opt/project/Callisto/release/documents/';
+
+export const DRIVER_RECORD_LIFE = 3 * 24 * 60 * 60 * 1000; // 3 days
 export const DRIVER_INTERVAL = 5000;
 export const DRIVER_CENTER_LINE_1 = {
     type: 'LineString',

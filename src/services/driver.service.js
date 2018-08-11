@@ -11,6 +11,12 @@ export async function startDriver() {
         try {
             // find out all entities
             const entities = await Entity.find();
+
+            // remove records created too long ago
+            const now = new Date();
+            const limit = now.getTime() - CONSTS.DRIVER_RECORD_LIFE;
+            const removeQuery = { createdAt: { $lt: limit } };
+            await Record.remove(removeQuery);
             
             await Promise.mapSeries(entities, async (entity) => {
                 let data = null;
