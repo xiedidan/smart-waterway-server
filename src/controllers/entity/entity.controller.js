@@ -150,15 +150,21 @@ export async function load(req, res) {
                     ));
 
                     keywords = keywords.map((keyword) => {
-                        const myDesigns = _.uniq(designs.filter((design) => {
-                            if (design.indexOf(`附图${keyword}`) !== -1) {
+                        let myDesigns = designs.filter((design) => {
+                            const position = design.indexOf(`附图${keyword}`);
+
+                            if (
+                                position !== -1 &&
+                                isNaN(parseInt(design.charAt(position + `附图${keyword}`.length), 10)) 
+                            ) {
                                 return true;
                             }
 
                             return false;
-                        }));
+                        });
+                        myDesigns = _.uniq(_.flatten(myDesigns));
 
-                        const mySnapshots = _.uniq(snapshots.filter((snapshot) => {
+                        let mySnapshots = _.uniq(snapshots.filter((snapshot) => {
                             if (
                                 snapshot.startsWith(keyword) &&
                                 isNaN(parseInt(snapshot.charAt(keyword.length), 10))
@@ -168,12 +174,27 @@ export async function load(req, res) {
 
                             return false;
                         }));
+                        mySnapshots = _.uniq(_.flatten(mySnapshots));
 
                         return {
                             designs: myDesigns,
                             snapshots: mySnapshots
                         };
                     });
+
+                    keywords = keywords.reduce((prev, curr) => {
+                        curr.designs.map((design) => {
+                            return prev.designs.push(design);
+                        });
+
+                        curr.snapshots.map((snapshot) => {
+                            return prev.snapshots.push(snapshot);
+                        });
+
+                        return prev;
+                    }, { designs: [], snapshots: [] });
+                    keywords.designs = _.uniq(keywords.designs);
+                    keywords.snapshots = _.uniq(keywords.snapshots);
 
                     const record = result.toJSON();
                     record.data = keywords;

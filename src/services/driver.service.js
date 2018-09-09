@@ -66,6 +66,22 @@ export async function startDriver() {
                     await entity.save();
                     break;
 
+                case CONSTS.ENTITY_TYPES.INFO:
+                    // insert a dummy record
+                    data = {
+                        entity: entity._id,
+                        data: 0
+                    };
+                    break;
+
+                case CONSTS.ENTITY_TYPES.DOCUMENT:
+                    // insert a dummpy record
+                    data = {
+                        entity: entity._id,
+                        data: 0
+                    };
+                    break;
+
                 default:
                     return Promise.resolve(null);
                 }
