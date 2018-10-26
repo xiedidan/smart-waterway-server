@@ -259,6 +259,35 @@ export async function list(req, res) {
     const { limit, offset } = pageOption;
 
     const { project, type } = req.query;
+    const query = _.pickBy({project, type}, _.identity);
+
+    try {
+        const entities = await Entity.find(query)
+            .populate('project')
+            .populate('user')
+            .sort({ updatedAt: -1 })
+            .limit(limit)
+            .skip(offset);
+
+        const count = await Entity.count(query);
+
+        return res.status(200).json({
+            _meta: {
+                ...getPageMetadata(pageOption, count)
+            },
+            entities
+        });
+    } catch (err) {
+        logger.error(`EntityCtrl::list() error`, err);
+        return res.status(500).send(err.toString());
+    }
+}
+
+export async function listLastRecord(req, res) {
+    const pageOption = getPageOption(req);
+    const { limit, offset } = pageOption;
+
+    const { project, type } = req.query;
 
     try {
         const params = {
@@ -270,12 +299,10 @@ export async function list(req, res) {
             type != null
         ) {
             params.type = { $in: type };
-        } else {
-            return res.status(200).json([]);
         }
 
         const query = _.pickBy(params, _.identity);
-
+        
         const entities = await Entity.find(query)
             .sort({ updatedAt: -1})
             .limit(limit)

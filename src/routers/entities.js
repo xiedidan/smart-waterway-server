@@ -9,6 +9,9 @@ router.route('/entities')
     .get(EntityCtrl.list)
     .post(EntityCtrl.create);
 
+router.route('/entities/status')
+    .get(EntityCtrl.listLastRecord);
+
 router.route('/entities/load')
     .get(EntityCtrl.load);
 
