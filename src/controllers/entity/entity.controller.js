@@ -12,6 +12,98 @@ import errors from '../../lib/errors';
 import { logger } from '../../lib/logger';
 import { getPageOption, getPageMetadata } from '../../lib/utils';
 
+function rewriteDocumentEntity(result) {
+    if (result.entity.type === CONSTS.ENTITY_TYPES.DOCUMENT) {
+        let keywords = result.entity.info;
+
+        const designs = fs.readdirSync(path.join(
+            CONSTS.DOCUMENT_PATH,
+            'design/'
+        ));
+
+        const snapshots = fs.readdirSync(path.join(
+            CONSTS.DOCUMENT_PATH,
+            'snapshot/'
+        ));
+
+        keywords = keywords.map((keyword) => {
+            let myDesigns = designs.filter((design) => {
+                const position = design.indexOf(`附图${keyword}`);
+
+                if (
+                    position !== -1 &&
+                    isNaN(parseInt(design.charAt(position + `附图${keyword}`.length), 10)) 
+                ) {
+                    return true;
+                }
+
+                return false;
+            });
+            myDesigns = _.uniq(_.flatten(myDesigns));
+
+            let mySnapshots = _.uniq(snapshots.filter((snapshot) => {
+                if (
+                    snapshot.startsWith(keyword) &&
+                    isNaN(parseInt(snapshot.charAt(keyword.length), 10))
+                ) {
+                    return true;
+                }
+
+                return false;
+            }));
+            mySnapshots = _.uniq(_.flatten(mySnapshots));
+
+            return {
+                designs: myDesigns,
+                snapshots: mySnapshots
+            };
+        });
+
+        keywords = keywords.reduce((prev, curr) => {
+            curr.designs.map((design) => {
+                return prev.designs.push(design);
+            });
+
+            curr.snapshots.map((snapshot) => {
+                return prev.snapshots.push(snapshot);
+            });
+
+            return prev;
+        }, { designs: [], snapshots: [] });
+        keywords.designs = _.uniq(keywords.designs);
+        keywords.snapshots = _.uniq(keywords.snapshots);
+
+        const record = result.toJSON();
+        record.data = keywords;
+
+        return record;
+    }
+
+    return result.toJSON();
+}
+
+async function loadLastRecord(entities) {
+    // load last record
+    const status = await Promise.map(entities, (entity) => {
+        return Record.findOne({
+            entity: entity._id
+        })
+            .populate('entity')
+            .sort({ createdAt: -1 });
+    });
+
+    // filter entity without last record
+    let results = status.filter((value) => {
+        if (value == null) {
+            return false;
+        }
+        
+        return true;
+    });
+
+    return results;
+}
+
 export async function entityById(req, res, next, id) {
     try {
         const entity = await Entity.findById(id);
@@ -117,93 +209,10 @@ export async function load(req, res) {
             entities !== undefined &&
             entities != null
         ) {
-            // load last record
-            const status = await Promise.map(entities, (entity) => {
-                return Record.findOne({
-                    entity: entity._id
-                })
-                    .populate('entity')
-                    .sort({ createdAt: -1 });
-            });
-
-            let results = status.filter((value) => {
-                if (value == null) {
-                    return false;
-                }
-                
-                return true;
-            });
+            const results = await loadLastRecord(entities);
 
             // rewrite record data of document entity with file names
-            results = results.map((result) => {
-                if (result.entity.type === CONSTS.ENTITY_TYPES.DOCUMENT) {
-                    let keywords = result.entity.info;
-
-                    const designs = fs.readdirSync(path.join(
-                        CONSTS.DOCUMENT_PATH,
-                        'design/'
-                    ));
-
-                    const snapshots = fs.readdirSync(path.join(
-                        CONSTS.DOCUMENT_PATH,
-                        'snapshot/'
-                    ));
-
-                    keywords = keywords.map((keyword) => {
-                        let myDesigns = designs.filter((design) => {
-                            const position = design.indexOf(`附图${keyword}`);
-
-                            if (
-                                position !== -1 &&
-                                isNaN(parseInt(design.charAt(position + `附图${keyword}`.length), 10)) 
-                            ) {
-                                return true;
-                            }
-
-                            return false;
-                        });
-                        myDesigns = _.uniq(_.flatten(myDesigns));
-
-                        let mySnapshots = _.uniq(snapshots.filter((snapshot) => {
-                            if (
-                                snapshot.startsWith(keyword) &&
-                                isNaN(parseInt(snapshot.charAt(keyword.length), 10))
-                            ) {
-                                return true;
-                            }
-
-                            return false;
-                        }));
-                        mySnapshots = _.uniq(_.flatten(mySnapshots));
-
-                        return {
-                            designs: myDesigns,
-                            snapshots: mySnapshots
-                        };
-                    });
-
-                    keywords = keywords.reduce((prev, curr) => {
-                        curr.designs.map((design) => {
-                            return prev.designs.push(design);
-                        });
-
-                        curr.snapshots.map((snapshot) => {
-                            return prev.snapshots.push(snapshot);
-                        });
-
-                        return prev;
-                    }, { designs: [], snapshots: [] });
-                    keywords.designs = _.uniq(keywords.designs);
-                    keywords.snapshots = _.uniq(keywords.snapshots);
-
-                    const record = result.toJSON();
-                    record.data = keywords;
-
-                    return record;
-                }
-
-                return result.toJSON();
-            });
+            results = results.map(rewriteDocumentEntity);
 
             return res.status(200).json(results);
         }
@@ -250,26 +259,53 @@ export async function list(req, res) {
     const { limit, offset } = pageOption;
 
     const { project, type } = req.query;
-    const query = _.pickBy({project, type}, _.identity);
 
     try {
+        const params = {
+            project
+        };
+
+        if (
+            type !== undefined &&
+            type != null
+        ) {
+            params.type = { $in: type };
+        } else {
+            return res.status(200).json([]);
+        }
+
+        const query = _.pickBy(params, _.identity);
+
         const entities = await Entity.find(query)
-            .populate('project')
-            .populate('user')
-            .sort({ updatedAt: -1 })
+            .sort({ updatedAt: -1})
             .limit(limit)
             .skip(offset);
 
-        const count = await Entity.count(query);
+        if (
+            entities !== undefined &&
+            entities != null
+        ) {
+            const results = await loadLastRecord(entities);
 
-        return res.status(200).json({
-            _meta: {
-                ...getPageMetadata(pageOption, count)
-            },
-            entities
-        });
+            // rewrite record data of document entity with file names
+            results = results.map(rewriteDocumentEntity);
+
+            // get total count
+            const all_entities = await Entity.find(query);
+            const all_results = await loadLastRecord(all_entities);
+            const count = all_results.length;
+
+            return res.status(200).json({
+                _meta: {
+                    ...getPageMetadata(pageOption, count)
+                },
+                results
+            });
+        }
+
+        return res.status(404).end();
     } catch (err) {
-        logger.error(`EntityCtrl::list() error`, err);
+        logger.error('EntityCtrl::list() error', err);
         return res.status(500).send(err.toString());
     }
 }
