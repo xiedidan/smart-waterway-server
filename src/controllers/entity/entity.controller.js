@@ -209,7 +209,7 @@ export async function load(req, res) {
             entities !== undefined &&
             entities != null
         ) {
-            const results = await loadLastRecord(entities);
+            let results = await loadLastRecord(entities);
 
             // rewrite record data of document entity with file names
             results = results.map(rewriteDocumentEntity);
@@ -285,7 +285,7 @@ export async function list(req, res) {
             entities !== undefined &&
             entities != null
         ) {
-            const results = await loadLastRecord(entities);
+            let results = await loadLastRecord(entities);
 
             // rewrite record data of document entity with file names
             results = results.map(rewriteDocumentEntity);
