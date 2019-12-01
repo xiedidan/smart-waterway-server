@@ -43,6 +43,8 @@ export const WEATHER = {
 };
 
 export const DOCUMENT_PATH = '/opt/project/Callisto/release/documents/';
+export const HYDROLOGY_PATH = '/opt/project/Callisto/release/hydrology/';
+export const HYDRO_SERVICE_URL = 'http://piecent.com:8090';
 
 export const DRIVER_RECORD_LIFE = 3 * 24 * 60 * 60 * 1000; // 3 days
 export const DRIVER_INTERVAL = 5000;

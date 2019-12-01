@@ -1,5 +1,9 @@
+import fs from 'fs';
+
 import _ from 'lodash';
 import Promise from 'bluebird';
+import axios from 'axios';
+
 import { Entity, Record } from '../models';
 import { logger } from '../lib/logger';
 import * as CONSTS from '../consts';
@@ -34,10 +38,38 @@ export async function startDriver() {
                     break;
 
                 case CONSTS.ENTITY_TYPES.HYDROLOGY:
-                    data = {
-                        level: getRandomNumber('int', 300, 400),
-                        rate: getRandomNumber('float', 0.0, 10.0),
-                    };
+                    /* there are three kinds of hydrology entities:
+                     * 1. full random entity - just randomly pick level and rate
+                     * 2. control entity - randomly pick level and rate as well, but need to update its level to hydro-service
+                     * 3. predict entity - randomly pick rate, but request its level from hydro-service
+                    */
+
+                    if (entity.info.type !== undefined && entity.info.type == 'control') {
+                        // baseline entity
+                        data = {
+                            level: getRandomNumber('int', 300, 400),
+                            rate: getRandomNumber('float', 0.0, 10.0),
+                        };
+                        
+                        await axios.get(`${CONSTS.HYDRO_SERVICE_URL}/update_key/${data.level}.0`);
+                    } else if (entity.info.type !== undefined && entity.info.type == 'predict') {
+                        // temporary entity
+                        const level_resp = await axios.post(`${CONSTS.HYDRO_SERVICE_URL}/predictions`, {
+                            name: entity.info.ref_name,
+                        });
+
+                        data = {
+                            level: parseInt(level_resp.data.level),
+                            rate: getRandomNumber('float', 0.0, 10.0),
+                        };
+                    }
+                    else {
+                        // full random entity
+                        data = {
+                            level: getRandomNumber('int', 300, 400),
+                            rate: getRandomNumber('float', 0.0, 10.0),
+                        };
+                    }
                     break;
 
                 case CONSTS.ENTITY_TYPES.MARKER:
