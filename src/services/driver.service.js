@@ -106,6 +106,14 @@ export async function startDriver() {
                     };
                     break;
 
+                case CONSTS.ENTITY_TYPES.VIDEO:
+                    // insert a dummy record
+                    data = {
+                        entity: entity._id,
+                        data: 0
+                    };
+                    break;
+
                 case CONSTS.ENTITY_TYPES.DOCUMENT:
                     // insert a dummpy record
                     data = {

@@ -165,7 +165,8 @@ export async function create(req, res) {
 
         if (
             req.body.type === CONSTS.ENTITY_TYPES.INFO ||
-            req.body.type === CONSTS.ENTITY_TYPES.DOCUMENT
+            req.body.type === CONSTS.ENTITY_TYPES.DOCUMENT ||
+            req.body.type === CONSTS.ENTITY_TYPES.VIDEO
         ) {
             // insert a dummy record
             await Record.create({
