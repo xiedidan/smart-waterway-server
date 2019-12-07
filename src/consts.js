@@ -22,6 +22,7 @@ export const ENTITY_TYPES = {
     SHIP: 4,
     DOCUMENT: 5,
     INFO: 6,
+    VIDEO: 7,
 };
 
 export const DEFAULT_PAGE_SIZE = 20;
